@@ -10,7 +10,7 @@ const streamUrl = computed(() => 'http://' + ip.value + ':81/stream')
         <section>
             <h1>Live View</h1>
             <div>
-                <!-- placeholder div where video will go -->
+                <img :src="streamUrl" />
             </div>
         </section>
 
@@ -18,7 +18,6 @@ const streamUrl = computed(() => 'http://' + ip.value + ':81/stream')
         <section>
             <button>Speak</button>
             <button>Mute</button>
-            <img :src="streamUrl" />
         </section>
     </main>
 </template>

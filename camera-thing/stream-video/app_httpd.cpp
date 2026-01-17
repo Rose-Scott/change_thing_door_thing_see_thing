@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "board_config.h"
-#include "camera_index.h"
 #include "esp32-hal-ledc.h"
 #include "esp_camera.h"
 #include "esp_http_server.h"
