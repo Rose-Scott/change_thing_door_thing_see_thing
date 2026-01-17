@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification'
 import { onMounted, ref, useTemplateRef } from 'vue'
 
 const drawerContents = useTemplateRef('drawer-content')
@@ -16,7 +17,7 @@ let resizeObserver = new ResizeObserver(entries => {
     }
 })
 
-function click() {
+async function click() {
     open.value = !open.value
 
     if (open.value) {
