@@ -1,37 +1,19 @@
 <script setup lang="ts">
-import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification'
 import { onMounted, ref, useTemplateRef } from 'vue'
-
-const drawerContents = useTemplateRef('drawer-content')
 
 const open = ref(false)
 
-const containerFullHeight = ref(0)
 const containerHeight = ref(0)
-
-let resizeObserver = new ResizeObserver(entries => {
-    for (const entry of entries) {
-        const rect = entry.contentRect
-
-        containerFullHeight.value = rect.height
-    }
-})
 
 async function click() {
     open.value = !open.value
 
     if (open.value) {
-        containerHeight.value = containerFullHeight.value
+        containerHeight.value = 350
     } else {
         containerHeight.value = 0
     }
 }
-
-onMounted(() => {
-    if (!drawerContents.value) return
-
-    resizeObserver.observe(drawerContents.value)
-})
 </script>
 
 <template>
@@ -41,27 +23,65 @@ onMounted(() => {
         </div>
 
         <div class="container" :style="{ height: `${containerHeight}px` }">
-            <div class="drawer-content" ref="drawer-content">
-                <div class="events-container">
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
-                    <p>Test</p>
+            <div class="drawer-content">
+                <div class="drawer-content-sizing">
+                    <div class="events">
+                        <p class="event-title">Events:</p>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="event">
+                            <p>Test</p>
+                        </div>
+
+                        <div class="spacing"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -75,7 +95,8 @@ p {
 
 .drawer {
     display: flex;
-    align-items: center;
+    justify-content: stretch;
+    align-items: stretch;
 
     flex-direction: column;
 
@@ -93,12 +114,50 @@ p {
     transition: height 200ms ease;
 }
 
-.drawer-contenr {
+.drawer-content {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+
+    overflow-y: auto;
+    scrollbar-color: #1d1d1d transparent;
+    scrollbar-width: thin;
+
+    height: 100%;
+}
+
+.drawer-content-sizing {
     display: flex;
 }
 
-.events-container {
-    padding: 1rem;
+.events {
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+}
+
+.event-title {
+    font-weight: 500;
+    font-size: 16px;
+
+    padding-bottom: 1rem;
+
+    border-bottom: solid 1px #1d1d1d;
+}
+
+.event {
+    border-bottom: solid 1px #1d1d1d;
+}
+
+.event > p {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.spacing {
+    height: 1rem;
 }
 
 .knob-grab {

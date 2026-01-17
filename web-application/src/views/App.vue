@@ -36,9 +36,9 @@ body {
 
 :root {
     font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-    font-size: 16px;
+    font-size: 14px;
     line-height: 24px;
-    font-weight: 400;
+    font-weight: 300;
 
     color: #ffffff;
 
@@ -47,5 +47,9 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
+}
+
+* {
+    overscroll-behavior: none;
 }
 </style>

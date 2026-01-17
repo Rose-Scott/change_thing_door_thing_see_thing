@@ -21,10 +21,10 @@ p {
     display: flex;
     justify-content: space-between;
 
-    background-image: linear-gradient(#000000ac, #00000000);
+    background-image: linear-gradient(#000000bc, #00000000);
 
     padding: 0.5rem;
-    padding-bottom: 1rem;
+    padding-bottom: 2rem;
     padding-top: 3rem;
 
     position: absolute;
