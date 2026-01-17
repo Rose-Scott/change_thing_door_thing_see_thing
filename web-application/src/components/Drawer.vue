@@ -5,34 +5,25 @@ const drawerContents = useTemplateRef('drawer-content')
 
 const open = ref(false)
 
-let mouseon = false
-
-function mousemove(event: MouseEvent) {}
-
-function mousedown(event: MouseEvent) {
-    mouseon = true
-}
-
-function mouseup(event: MouseEvent) {
-    mouseon = false
-}
-
+const containerFullHeight = ref(0)
 const containerHeight = ref(0)
 
 let resizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
         const rect = entry.contentRect
 
-        console.log(rect)
-
-        containerHeight.value = rect.height
+        containerFullHeight.value = rect.height
     }
 })
 
 function click() {
     open.value = !open.value
 
-    console.log('click', open.value)
+    if (open.value) {
+        containerHeight.value = containerFullHeight.value
+    } else {
+        containerHeight.value = 0
+    }
 }
 
 onMounted(() => {
@@ -43,12 +34,12 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="drawer">
-        <div class="knob-grab" @mousedown="mousedown" @mouseup="mouseup" @mousemove="mousemove" @click="click">
+    <div class="drawer" ref="drawer">
+        <div class="knob-grab" @click="click">
             <div class="knob"></div>
         </div>
 
-        <div class="container" :style="{ height: open ? `${containerHeight}px` : '0px' }">
+        <div class="container" :style="{ height: `${containerHeight}px` }">
             <div class="drawer-content" ref="drawer-content">
                 <div class="events-container">
                     <p>Test</p>
@@ -97,6 +88,8 @@ p {
 
 .container {
     overflow-y: hidden;
+
+    transition: height 200ms ease;
 }
 
 .drawer-contenr {
