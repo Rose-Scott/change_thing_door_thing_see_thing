@@ -111,7 +111,7 @@ p {
 .container {
     overflow-y: hidden;
 
-    transition: height 200ms ease;
+    transition: height 200ms ease-in-out;
 }
 
 .drawer-content {
