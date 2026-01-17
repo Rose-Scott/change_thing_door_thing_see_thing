@@ -23,7 +23,9 @@ img {
     justify-content: center;
     align-items: center;
 
-    width: 100vw;
-    height: 100vh;
+    flex-grow: 1;
+    align-self: stretch;
+
+    min-height: 0;
 }
 </style>
