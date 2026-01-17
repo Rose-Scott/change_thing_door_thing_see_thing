@@ -24,3 +24,4 @@ web-application/dist-ssr
 *.njsproj
 *.sln
 *.sw?
+web-application/src-tauri/gen/android/keystore.properties
