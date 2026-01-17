@@ -20,6 +20,7 @@ p {
 
     padding: 0.5rem;
     padding-bottom: 1rem;
+    padding-top: 3rem;
 
     position: absolute;
     top: 0;

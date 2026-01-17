@@ -23,6 +23,8 @@ p {
     align-self: stretch;
 
     border-top: solid 1px #1d1d1d;
+
+    padding-bottom: 1rem;
 }
 
 button {
