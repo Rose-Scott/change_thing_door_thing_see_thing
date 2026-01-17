@@ -23,9 +23,9 @@ img {
     justify-content: center;
     align-items: center;
 
-    flex-grow: 1;
     align-self: stretch;
 
+    flex-grow: 1;
     min-height: 0;
 }
 </style>
