@@ -1,13 +1,22 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, useTemplateRef } from 'vue'
+import { liveViewLoaded } from '../store/store'
 
 const ip = ref('10.142.233.231')
 const streamUrl = computed(() => 'http://' + ip.value + ':81/stream')
+
+const image = useTemplateRef('image')
+
+onMounted(() => {
+    if (!image.value) return
+
+    image.value.onload = () => (liveViewLoaded.value = true)
+})
 </script>
 
 <template>
     <div class="center-view">
-        <img :src="streamUrl" />
+        <img :src="streamUrl" ref="image" />
     </div>
 </template>
 

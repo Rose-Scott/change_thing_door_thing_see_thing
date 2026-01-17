@@ -2,6 +2,10 @@
 
 #include "esp_camera.h"
 
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
+
 // ===========================
 // Select camera model in board_config.h
 // ===========================
@@ -20,6 +24,30 @@ void setup() {
     Serial.begin(115200);
     Serial.setDebugOutput(true);
     Serial.println();
+
+    SPI.begin(7, 9, 8, 21);  // SCK, MISO, MOSI, CS - adjust these for your Xiao expansion board
+    if (!SD.begin(21, SPI, 4000000)) {  // CS pin, SPI bus, frequency
+        Serial.println("Card Mount Failed");
+        // Don't return - continue without SD
+    } else {
+        uint8_t cardType = SD.cardType();
+        if (cardType == CARD_NONE) {
+            Serial.println("No SD card attached");
+        } else {
+            Serial.print("SD Card Type: ");
+            if (cardType == CARD_MMC) {
+                Serial.println("MMC");
+            } else if (cardType == CARD_SD) {
+                Serial.println("SDSC");
+            } else if (cardType == CARD_SDHC) {
+                Serial.println("SDHC");
+            } else {
+                Serial.println("UNKNOWN");
+            }
+            uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+            Serial.printf("SD Card Size: %lluMB\n", cardSize);
+        }
+    }
 
     camera_config_t config;
     config.ledc_channel = LEDC_CHANNEL_0;
@@ -103,5 +131,5 @@ void setup() {
 
 void loop() {
     // Do nothing. Everything is done in another task by the web server
-    delay(10000);
+    delay(125);
 }
