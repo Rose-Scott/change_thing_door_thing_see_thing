@@ -194,6 +194,42 @@ static esp_err_t audio_options_handler(httpd_req_t* req) {
     return ESP_OK;
 }
 
+static esp_err_t record_handler(httpd_req_t* req) {
+    Serial.println("Starting audio recording...");
+
+    // Buffer to hold recorded audio
+    const int RECORD_TIME = 3;                              // 3 seconds
+    const int BUFFER_SIZE = 1600 * RECORD_TIME * 2;  // 2 bytes per sample
+    uint8_t* recordBuffer = (uint8_t*)malloc(BUFFER_SIZE);
+
+    if (!recordBuffer) {
+        httpd_resp_send_500(req);
+        return ESP_FAIL;
+    }
+
+    // Record audio from I2S microphone
+    size_t bytesRead = 0;
+    size_t totalBytesRead = 0;
+
+    while (totalBytesRead < BUFFER_SIZE) {
+        i2s_read(I2S_NUM_1, recordBuffer + totalBytesRead,
+                 BUFFER_SIZE - totalBytesRead, &bytesRead, portMAX_DELAY);
+        totalBytesRead += bytesRead;
+    }
+
+    Serial.printf("Recorded %d bytes\n", totalBytesRead);
+
+    // Send recorded audio back as response
+    httpd_resp_set_type(req, "application/octet-stream");
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+    httpd_resp_send(req, (const char*)recordBuffer, totalBytesRead);
+
+    free(recordBuffer);
+    Serial.println("Recording sent");
+
+    return ESP_OK;
+}
+
 void startCameraServer() {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.max_uri_handlers = 16;
@@ -216,6 +252,12 @@ void startCameraServer() {
         .handler = audio_options_handler,
         .user_ctx = NULL};
 
+    httpd_uri_t record_uri = {
+        .uri = "/record",
+        .method = HTTP_GET,
+        .handler = record_handler,
+        .user_ctx = NULL};
+
     ra_filter_init(&ra_filter, 20);
 
     config.server_port += 1;
@@ -231,6 +273,7 @@ void startCameraServer() {
     if (httpd_start(&stream_httpd, &config) == ESP_OK) {
         httpd_register_uri_handler(stream_httpd, &audio_uri);
         httpd_register_uri_handler(stream_httpd, &audio_options_uri);
+        httpd_register_uri_handler(stream_httpd, &record_uri);
     }
 }
 
