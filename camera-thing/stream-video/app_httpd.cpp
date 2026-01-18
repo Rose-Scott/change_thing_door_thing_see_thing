@@ -20,6 +20,7 @@
 #include "img_converters.h"
 #include "sdkconfig.h"
 
+
 #if defined(ARDUINO_ARCH_ESP32) && defined(CONFIG_ARDUHAL_ESP_LOG)
 #include "esp32-hal-log.h"
 #endif
@@ -173,6 +174,12 @@ void startCameraServer() {
         .handler = stream_handler,
         .user_ctx = NULL};
 
+    httpd_uri_t audio_uri = {
+        .uri = "/audio",
+        .method = HTTP_GET,
+        .handler = audio_stream_handler,
+        .user_ctx = NULL};
+
     ra_filter_init(&ra_filter, 20);
 
     config.server_port += 1;
@@ -180,6 +187,7 @@ void startCameraServer() {
     log_i("Starting stream server on port: '%d'", config.server_port);
     if (httpd_start(&stream_httpd, &config) == ESP_OK) {
         httpd_register_uri_handler(stream_httpd, &stream_uri);
+        httpd_register_uri_handler(stream_httpd, &audio_uri);
     }
 }
 
@@ -189,4 +197,100 @@ void setupLedFlash() {
 #else
     log_i("LED flash is disabled -> LED_GPIO_NUM undefined");
 #endif
+}
+
+
+// Audio streaming
+#define AUDIO_CHUNK_TIME    0.5f     
+#define AUDIO_SAMPLE_RATE   16000U
+#define AUDIO_SAMPLE_BITS   16
+#define AUDIO_HEADER_SIZE   44
+#define AUDIO_GAIN_SHIFT    2    
+
+static bool audio_streaming = false;
+
+void generate_wav_header(uint8_t *wav_header, uint32_t wav_size, uint32_t sample_rate);
+
+void generate_wav_header(uint8_t *wav_header, uint32_t wav_size, uint32_t sample_rate)
+{
+  // See this for reference: http://soundfile.sapp.org/doc/WaveFormat/
+  uint32_t file_size = wav_size + WAV_HEADER_SIZE - 8;
+  uint32_t byte_rate = SAMPLE_RATE * SAMPLE_BITS / 8;
+  const uint8_t set_wav_header[] = {
+    'R', 'I', 'F', 'F', // ChunkID
+    file_size, file_size >> 8, file_size >> 16, file_size >> 24, // ChunkSize
+    'W', 'A', 'V', 'E', // Format
+    'f', 'm', 't', ' ', // Subchunk1ID
+    0x10, 0x00, 0x00, 0x00, // Subchunk1Size (16 for PCM)
+    0x01, 0x00, // AudioFormat (1 for PCM)
+    0x01, 0x00, // NumChannels (1 channel)
+    sample_rate, sample_rate >> 8, sample_rate >> 16, sample_rate >> 24, // SampleRate
+    byte_rate, byte_rate >> 8, byte_rate >> 16, byte_rate >> 24, // ByteRate
+    0x02, 0x00, // BlockAlign
+    0x10, 0x00, // BitsPerSample (16 bits)
+    'd', 'a', 't', 'a', // Subchunk2ID
+    wav_size, wav_size >> 8, wav_size >> 16, wav_size >> 24, // Subchunk2Size
+  };
+  memcpy(wav_header, set_wav_header, sizeof(set_wav_header));
+}
+
+sp_err_t record_wav_chunk(uint8_t **out_buf, size_t *out_len) {
+  uint32_t record_size = (uint32_t)(AUDIO_SAMPLE_RATE * (AUDIO_SAMPLE_BITS / 8) * AUDIO_CHUNK_TIME);
+  uint32_t total_size  = AUDIO_HEADER_SIZE + record_size;
+
+  uint8_t *buf = (uint8_t *)ps_malloc(total_size);
+  if (!buf) {
+    return ESP_ERR_NO_MEM;
+  }
+
+  generate_wav_header(buf, record_size, AUDIO_SAMPLE_RATE);
+
+  uint8_t *audio_ptr = buf + AUDIO_HEADER_SIZE;
+  size_t   sample_size = 0;
+
+  esp_i2s::i2s_read(esp_i2s::I2S_NUM_0, audio_ptr, record_size, &sample_size, portMAX_DELAY);
+
+  if (sample_size == 0) {
+    free(buf);
+    return ESP_FAIL;
+  }
+
+  for (uint32_t i = 0; i < sample_size; i += AUDIO_SAMPLE_BITS / 8) {
+    (*(uint16_t *)(audio_ptr + i)) <<= AUDIO_GAIN_SHIFT;
+  }
+
+  *out_buf = buf;
+  *out_len = AUDIO_HEADER_SIZE + sample_size;
+  return ESP_OK;
+}
+
+static esp_err_t audio_stream_handler(httpd_req_t *req) {
+  esp_err_t res = ESP_OK;
+  audio_streaming = true;
+
+  httpd_resp_set_type(req, "audio/wav");
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+  while (audio_streaming && res == ESP_OK) {
+    uint8_t *wav_buf = NULL;
+    size_t   wav_len = 0;
+
+    if (record_wav_chunk(&wav_buf, &wav_len) != ESP_OK) {
+      res = ESP_FAIL;
+      break;
+    }
+    res = httpd_resp_send_chunk(req, (const char *)wav_buf, wav_len);
+    free(wav_buf);
+
+    if (res != ESP_OK) {
+      break;
+    }
+  }
+
+  if (res == ESP_OK) {
+    httpd_resp_send_chunk(req, NULL, 0);
+  }
+
+  audio_streaming = false;
+  return res;
 }
