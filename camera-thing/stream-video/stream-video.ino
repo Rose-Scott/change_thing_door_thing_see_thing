@@ -3,7 +3,7 @@
 #include "esp_camera.h"
 
 #include "FS.h"
-#include "SD.h"
+
 #include "SPI.h"
 
 // ===========================
@@ -14,8 +14,8 @@
 // ===========================
 // Enter your WiFi credentials
 // ===========================
-const char* ssid = "Pixel_7895";
-const char* password = "lehotsPot";
+const char* ssid = "Poly pixel";
+const char* password = "H0lypassword";
 
 void startCameraServer();
 void setupLedFlash();
@@ -26,28 +26,6 @@ void setup() {
     Serial.println();
 
     SPI.begin(7, 9, 8, 21);  // SCK, MISO, MOSI, CS - adjust these for your Xiao expansion board
-    if (!SD.begin(21, SPI, 4000000)) {  // CS pin, SPI bus, frequency
-        Serial.println("Card Mount Failed");
-        // Don't return - continue without SD
-    } else {
-        uint8_t cardType = SD.cardType();
-        if (cardType == CARD_NONE) {
-            Serial.println("No SD card attached");
-        } else {
-            Serial.print("SD Card Type: ");
-            if (cardType == CARD_MMC) {
-                Serial.println("MMC");
-            } else if (cardType == CARD_SD) {
-                Serial.println("SDSC");
-            } else if (cardType == CARD_SDHC) {
-                Serial.println("SDHC");
-            } else {
-                Serial.println("UNKNOWN");
-            }
-            uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-            Serial.printf("SD Card Size: %lluMB\n", cardSize);
-        }
-    }
 
     camera_config_t config;
     config.ledc_channel = LEDC_CHANNEL_0;
@@ -101,7 +79,7 @@ void setup() {
     esp_err_t err = esp_camera_init(&config);
     if (err != ESP_OK) {
         Serial.printf("Camera init failed with error 0x%x", err);
-        return;
+        //return;
     }
 
     sensor_t* s = esp_camera_sensor_get();
@@ -121,6 +99,7 @@ void setup() {
     }
     Serial.println("");
     Serial.println("WiFi connected");
+    Serial.println(WiFi.localIP());
 
     startCameraServer();
 
