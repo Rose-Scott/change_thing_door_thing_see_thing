@@ -547,7 +547,7 @@ void setup() {
 void loop() {
     int buttonValue = digitalRead(BUTTON_PIN);
 
-    if (sensorVal == HIGH) {
+    if (buttonValue == HIGH) {
         tone(SPEAKER_PIN, 1000, 1000);
     }
 
