@@ -164,42 +164,6 @@ static esp_err_t stream_handler(httpd_req_t* req) {
     return res;
 }
 
-void startCameraServer() {
-    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_uri_handlers = 16;
-
-    httpd_uri_t stream_uri = {
-        .uri = "/stream",
-        .method = HTTP_GET,
-        .handler = stream_handler,
-        .user_ctx = NULL};
-
-    httpd_uri_t audio_uri = {
-        .uri = "/audio",
-        .method = HTTP_GET,
-        .handler = audio_stream_handler,
-        .user_ctx = NULL};
-
-    ra_filter_init(&ra_filter, 20);
-
-    config.server_port += 1;
-    config.ctrl_port += 1;
-    log_i("Starting stream server on port: '%d'", config.server_port);
-    if (httpd_start(&stream_httpd, &config) == ESP_OK) {
-        httpd_register_uri_handler(stream_httpd, &stream_uri);
-        httpd_register_uri_handler(stream_httpd, &audio_uri);
-    }
-}
-
-void setupLedFlash() {
-#if defined(LED_GPIO_NUM)
-    ledcAttach(LED_GPIO_NUM, 5000, 8);
-#else
-    log_i("LED flash is disabled -> LED_GPIO_NUM undefined");
-#endif
-}
-
-
 // Audio streaming
 #define AUDIO_CHUNK_TIME    0.5f     
 #define AUDIO_SAMPLE_RATE   16000U
@@ -214,8 +178,8 @@ void generate_wav_header(uint8_t *wav_header, uint32_t wav_size, uint32_t sample
 void generate_wav_header(uint8_t *wav_header, uint32_t wav_size, uint32_t sample_rate)
 {
   // See this for reference: http://soundfile.sapp.org/doc/WaveFormat/
-  uint32_t file_size = wav_size + WAV_HEADER_SIZE - 8;
-  uint32_t byte_rate = SAMPLE_RATE * SAMPLE_BITS / 8;
+  uint32_t file_size = wav_size + AUDIO_HEADER_SIZE - 8;
+  uint32_t byte_rate = sample_rate * AUDIO_SAMPLE_BITS / 8;
   const uint8_t set_wav_header[] = {
     'R', 'I', 'F', 'F', // ChunkID
     file_size, file_size >> 8, file_size >> 16, file_size >> 24, // ChunkSize
@@ -234,7 +198,7 @@ void generate_wav_header(uint8_t *wav_header, uint32_t wav_size, uint32_t sample
   memcpy(wav_header, set_wav_header, sizeof(set_wav_header));
 }
 
-sp_err_t record_wav_chunk(uint8_t **out_buf, size_t *out_len) {
+esp_err_t record_wav_chunk(uint8_t **out_buf, size_t *out_len) {
   uint32_t record_size = (uint32_t)(AUDIO_SAMPLE_RATE * (AUDIO_SAMPLE_BITS / 8) * AUDIO_CHUNK_TIME);
   uint32_t total_size  = AUDIO_HEADER_SIZE + record_size;
 
@@ -293,4 +257,39 @@ static esp_err_t audio_stream_handler(httpd_req_t *req) {
 
   audio_streaming = false;
   return res;
+}
+
+void startCameraServer() {
+    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.max_uri_handlers = 16;
+
+    httpd_uri_t stream_uri = {
+        .uri = "/stream",
+        .method = HTTP_GET,
+        .handler = stream_handler,
+        .user_ctx = NULL};
+
+    httpd_uri_t audio_uri = {
+        .uri = "/audio",
+        .method = HTTP_GET,
+        .handler = audio_stream_handler,
+        .user_ctx = NULL};
+
+    ra_filter_init(&ra_filter, 20);
+
+    config.server_port += 1;
+    config.ctrl_port += 1;
+    log_i("Starting stream server on port: '%d'", config.server_port);
+    if (httpd_start(&stream_httpd, &config) == ESP_OK) {
+        httpd_register_uri_handler(stream_httpd, &stream_uri);
+        httpd_register_uri_handler(stream_httpd, &audio_uri);
+    }
+}
+
+void setupLedFlash() {
+#if defined(LED_GPIO_NUM)
+    ledcAttach(LED_GPIO_NUM, 5000, 8);
+#else
+    log_i("LED flash is disabled -> LED_GPIO_NUM undefined");
+#endif
 }
