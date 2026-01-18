@@ -37,6 +37,13 @@ const char* password = "H0lypassword";
 #define I2S_PDM_DATA_PIN 41
 
 // ===================
+// XIAO ESP32S3 Sense PDM Microphone Pins
+// ===================
+#define BUTTON_PIN D4
+#define SPEAKER_PIN D8
+#define IR_EMITTER_PIN D10
+
+// ===================
 // Stream Configuration
 // ===================
 #define PART_BOUNDARY "123456789000000000000987654321"
@@ -499,6 +506,9 @@ void startCameraServer() {
 // Setup & Loop
 // ===================
 void setup() {
+    pinMode(SPEAKER_PIN, OUTPUT);
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
+
     Serial.begin(115200);
     Serial.setDebugOutput(true);
     Serial.println();
@@ -535,5 +545,11 @@ void setup() {
 }
 
 void loop() {
+    int buttonValue = digitalRead(BUTTON_PIN);
+
+    if (sensorVal == HIGH) {
+        tone(SPEAKER_PIN, 1000, 1000);
+    }
+
     delay(10000);
 }
