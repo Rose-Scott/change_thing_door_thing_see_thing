@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <driver/i2s.h>
+
+#include "Arduino.h"
 #include "board_config.h"
 #include "esp32-hal-ledc.h"
 #include "esp_camera.h"
@@ -163,6 +166,34 @@ static esp_err_t stream_handler(httpd_req_t* req) {
     return res;
 }
 
+static esp_err_t audio_handler(httpd_req_t* req) {
+    Serial.println("Playing test tone via PWM...");
+
+    // // Generate a simple 440Hz tone for 1 second
+    // for (int i = 0; i < 16000; i++) {  // 1 second at 16kHz
+    //     // Generate sine wave
+    //     float sample = sin(2.0 * PI * 440.0 * i / 16000.0);
+    //     uint8_t pwmValue = (uint8_t)((sample + 1.0) * 127.5);
+
+    //     ledcWrite(0, pwmValue);
+    //     delayMicroseconds(62);
+    // }
+
+    Serial.println("Test tone complete");
+
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+    httpd_resp_send(req, "OK", 2);
+    return ESP_OK;
+}
+
+static esp_err_t audio_options_handler(httpd_req_t* req) {
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "POST, OPTIONS");
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
+    httpd_resp_send(req, NULL, 0);
+    return ESP_OK;
+}
+
 void startCameraServer() {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.max_uri_handlers = 16;
@@ -173,6 +204,18 @@ void startCameraServer() {
         .handler = stream_handler,
         .user_ctx = NULL};
 
+    httpd_uri_t audio_uri = {
+        .uri = "/audio",
+        .method = HTTP_POST,
+        .handler = audio_handler,
+        .user_ctx = NULL};
+
+    httpd_uri_t audio_options_uri = {
+        .uri = "/audio",
+        .method = HTTP_OPTIONS,
+        .handler = audio_options_handler,
+        .user_ctx = NULL};
+
     ra_filter_init(&ra_filter, 20);
 
     config.server_port += 1;
@@ -180,6 +223,14 @@ void startCameraServer() {
     log_i("Starting stream server on port: '%d'", config.server_port);
     if (httpd_start(&stream_httpd, &config) == ESP_OK) {
         httpd_register_uri_handler(stream_httpd, &stream_uri);
+    }
+
+    config.server_port += 1;
+    config.ctrl_port += 1;
+    log_i("Starting audio server on port: '%d'", config.server_port);
+    if (httpd_start(&stream_httpd, &config) == ESP_OK) {
+        httpd_register_uri_handler(stream_httpd, &audio_uri);
+        httpd_register_uri_handler(stream_httpd, &audio_options_uri);
     }
 }
 

@@ -31,9 +31,6 @@
 // #define CAMERA_MODEL_DFRobot_Romeo_ESP32S3 // Has PSRAM
 #include "camera_pins.h"
 
-#define I2S_PDM_CLK_PIN 42
-#define I2S_PDM_DATA_PIN 41
-
 #define BUTTON_PIN D4
 #define SPEAKER_PIN D8
 #define IR_EMITTER_PIN D10
