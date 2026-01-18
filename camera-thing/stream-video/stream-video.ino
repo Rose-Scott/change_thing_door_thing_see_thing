@@ -16,10 +16,6 @@
 const char* ssid = "Pixel_7895";
 const char* password = "lehotsPot";
 
-#define BUTTON_PIN D4
-#define SPEAKER_PIN D8
-#define IR_EMITTER_PIN D10
-
 void startCameraServer();
 void setupLedFlash();
 
@@ -30,30 +26,6 @@ void setup() {
     Serial.begin(115200);
     Serial.setDebugOutput(true);
     Serial.println();
-
-    SPI.begin(7, 9, 8, 21);             // SCK, MISO, MOSI, CS - adjust these for your Xiao expansion board
-    if (!SD.begin(21, SPI, 4000000)) {  // CS pin, SPI bus, frequency
-        Serial.println("Card Mount Failed");
-        // Don't return - continue without SD
-    } else {
-        uint8_t cardType = SD.cardType();
-        if (cardType == CARD_NONE) {
-            Serial.println("No SD card attached");
-        } else {
-            Serial.print("SD Card Type: ");
-            if (cardType == CARD_MMC) {
-                Serial.println("MMC");
-            } else if (cardType == CARD_SD) {
-                Serial.println("SDSC");
-            } else if (cardType == CARD_SDHC) {
-                Serial.println("SDHC");
-            } else {
-                Serial.println("UNKNOWN");
-            }
-            uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-            Serial.printf("SD Card Size: %lluMB\n", cardSize);
-        }
-    }
 
     camera_config_t config;
     config.ledc_channel = LEDC_CHANNEL_0;
@@ -135,14 +107,28 @@ void setup() {
     Serial.println("' to connect");
 }
 
+int dingDongCounter = 0;
+
 void loop() {
     int buttonValue = digitalRead(BUTTON_PIN);
 
-    if (buttonValue == LOW) {
-        Serial.println("Button down");
+    if (dingDongCounter == 0) {
+        if (buttonValue == LOW) {
+            Serial.println("Button down");
 
-        tone(SPEAKER_PIN, 1000, 1000);
+            dingDongCounter = 2;
+        }
+
+        delay(20);
+    } else {
+        if (dingDongCounter == 2) {
+            tone(SPEAKER_PIN, 1000, 1000);
+            delay(1000);
+        } else {
+            tone(SPEAKER_PIN, 800, 1000);
+            delay(1000);
+        }
+
+        dingDongCounter--;
     }
-
-    delay(1000);
 }
